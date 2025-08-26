@@ -1,8 +1,9 @@
 fastapi==0.104.1
 uvicorn==0.24.0
-PyMuPDF==1.21.1
+PyMuPDF==1.23.1
 sqlalchemy==2.0.23
-python-multipart==0.0.6
-python-jose==3.3.0
-passlib==1.7.4
-bcrypt==4.0.1
+pydantic==2.5.0
+httpx==0.26.0
+python-dotenv==1.0.0
+spacy==3.7.2
+reportlab==4.0.7
