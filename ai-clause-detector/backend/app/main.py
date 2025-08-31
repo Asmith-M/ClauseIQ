@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+import os
+from dotenv import load_dotenv
 
 from .api import deps
 from .api import clause_extraction
@@ -14,6 +16,20 @@ from .middleware import CORSMiddlewareWithCOOP
 
 app = FastAPI()
 
+# Load environment variables from .env in development
+load_dotenv()
+
+# Read allowed origins from environment (comma-separated). Defaults to localhost Vite dev port and the deployed Vercel app.
+raw_allowed_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,https://clause-iq.vercel.app"
+)
+# Build list and filter out empty values
+allow_origins = [o.strip() for o in raw_allowed_origins.split(",") if o.strip()]
+
+# If you intentionally want to allow all origins in a non-credentialed context, set ALLOWED_ORIGINS="*" (not recommended with credentials).
+if allow_origins == ["*"]:
+    allow_origins = ["*"]
 # Custom exception handler for UnicodeDecodeError
 @app.exception_handler(UnicodeDecodeError)
 async def unicode_decode_error_handler(request, exc):
@@ -48,9 +64,9 @@ async def validation_exception_handler(request, exc):
 # Add CORS middleware to allow frontend origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allow_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -68,3 +84,8 @@ app.include_router(document_report.router, prefix="/api")
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the FastAPI backend!"}
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint for connectivity testing"""
+    return {"status": "healthy", "service": "clause-iq-backend"}
