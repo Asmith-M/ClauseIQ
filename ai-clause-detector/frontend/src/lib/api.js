@@ -57,11 +57,9 @@ const createClient = ({ baseURL, timeout = 15000, withCredentials = true } = {})
   return client;
 };
 
-// Initialize client using environment variables at import time
+// Initialize client using Vite environment variables at import time
 const getBaseUrl = () => {
-  return (
-    process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000'
-  );
+  return import.meta.env.VITE_API_URL || 'http://localhost:8000';
 };
 
 export const apiClient = createClient({ baseURL: getBaseUrl() });
