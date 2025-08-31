@@ -7,3 +7,4 @@ httpx==0.24.1
 python-dotenv==1.0.0
 reportlab==4.0.7
 spacy==3.7.2
+python-multipart==0.0.6
