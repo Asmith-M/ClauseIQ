@@ -2,10 +2,20 @@
 
 import axios from 'axios';
 
+// Use Vite's import.meta.env system
 const getBaseUrl = () => {
-  return (
-    process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000'
-  );
+  // Vite
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  // Next.js or CRA fallback (optional)
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL;
+  }
+
+  // Default fallback
+  return 'http://localhost:8000';
 };
 
 const createClient = ({ baseURL, timeout = 15000, withCredentials = true } = {}) => {
@@ -14,27 +24,28 @@ const createClient = ({ baseURL, timeout = 15000, withCredentials = true } = {})
     timeout,
     withCredentials,
     headers: {
-      'Accept': 'application/json'
-    }
+      'Accept': 'application/json',
+    },
   });
 
-  // Response interceptor to unwrap common API structure
+  // Response interceptor to unwrap common API structure and add retry logic
   client.interceptors.response.use(
     (res) => res,
     async (error) => {
       const config = error.config;
-      if (!config || !config.retry) {
-        config.retry = 0;
+
+      if (!config || config._retryCount === undefined) {
+        config._retryCount = 0;
         config.retryDelay = 3000; // 3 seconds
         config.maxRetries = 3;
       }
 
-      // Retry logic for network errors or 503 (Render cold start)
+      // Retry for network errors or 503s (e.g. cold starts)
       if (
         (!error.response || error.response.status === 503) &&
-        config.retry < config.maxRetries
+        config._retryCount < config.maxRetries
       ) {
-        config.retry += 1;
+        config._retryCount += 1;
         await new Promise((resolve) => setTimeout(resolve, config.retryDelay));
         return client(config);
       }
@@ -45,15 +56,16 @@ const createClient = ({ baseURL, timeout = 15000, withCredentials = true } = {})
         return Promise.reject({
           status,
           data,
-          message: data?.detail || data?.message || error.message
+          message: data?.detail || data?.message || error.message,
         });
       } else if (error.request) {
         return Promise.reject({
           status: null,
           data: null,
-          message: 'No response from server. Possible network error or CORS issue.'
+          message: 'No response from server. Possible network error or CORS issue.',
         });
       }
+
       return Promise.reject({ status: null, data: null, message: error.message });
     }
   );
@@ -63,8 +75,16 @@ const createClient = ({ baseURL, timeout = 15000, withCredentials = true } = {})
 
 export const apiClient = createClient({ baseURL: getBaseUrl() });
 
-// Upload with progress callback
-export const uploadDocument = async ({ file, filename, clausesData = null, onProgress, timeout = 60000 }) => {
+/**
+ * Upload a document with progress callback
+ */
+export const uploadDocument = async ({
+  file,
+  filename,
+  clausesData = null,
+  onProgress,
+  timeout = 60000,
+}) => {
   const form = new FormData();
   form.append('filename', filename);
   form.append('file', file);
@@ -74,35 +94,53 @@ export const uploadDocument = async ({ file, filename, clausesData = null, onPro
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout,
     onUploadProgress: (progressEvent) => {
-      if (onProgress) {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+      if (onProgress && progressEvent.total) {
+        const percentCompleted = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        );
         onProgress(percentCompleted);
       }
-    }
+    },
   });
 };
 
+/**
+ * Full analysis of uploaded document
+ */
 export const fullAnalyze = async ({ file, timeout = 60000 }) => {
   const form = new FormData();
   form.append('file', file);
   return apiClient.post('/api/full-analyze/', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    timeout
+    timeout,
   });
 };
 
+/**
+ * Analyze a specific clause
+ */
 export const analyzeClause = async ({ clause, timeout = 15000 }) => {
   return apiClient.post('/api/analyze-clause/', { clause }, { timeout });
 };
 
+/**
+ * List uploaded documents with pagination
+ */
 export const listDocuments = async ({ skip = 0, limit = 10, timeout = 10000 } = {}) => {
-  return apiClient.get('/api/documents/', { params: { skip, limit }, timeout });
+  return apiClient.get('/api/documents/', {
+    params: { skip, limit },
+    timeout,
+  });
 };
 
+/**
+ * Get clauses for a specific document
+ */
 export const getClausesForDocument = async ({ docId, timeout = 10000 }) => {
   return apiClient.get(`/api/documents/${docId}/clauses/`, { timeout });
 };
 
+// Optional: Named exports and default export
 export default {
   uploadDocument,
   fullAnalyze,
