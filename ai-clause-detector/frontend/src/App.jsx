@@ -4,4 +4,4 @@ export default function App() {
   return <Page />
   
 }
-console.log('API URL being used:', process.env.VITE_API_URL);
+console.log('API URL being used:', import.meta.env.VITE_API_URL);
