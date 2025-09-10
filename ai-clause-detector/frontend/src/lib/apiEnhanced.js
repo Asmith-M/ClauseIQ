@@ -1,26 +1,10 @@
-// Enhanced API client with retry, progress, and improved error handling
+// apiEnhanced.js
+// Enhanced API client with the interceptor fix
 
 import axios from 'axios';
 
-// Use Vite's import.meta.env system
-const getBaseUrl = () => {
-  // Vite
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-
-  // Next.js or CRA fallback (optional)
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL;
-  }
-
-  // Default fallback
-  return 'http://localhost:8000';
-};
-
-const createClient = ({ baseURL, timeout = 15000, withCredentials = true } = {}) => {
+const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
   const client = axios.create({
-    baseURL,
     timeout,
     withCredentials,
     headers: {
@@ -34,7 +18,7 @@ const createClient = ({ baseURL, timeout = 15000, withCredentials = true } = {})
     async (error) => {
       const config = error.config;
 
-      if (!config || config._retryCount === undefined) {
+      if (config._retryCount === undefined) {
         config._retryCount = 0;
         config.retryDelay = 3000; // 3 seconds
         config.maxRetries = 3;
@@ -73,7 +57,15 @@ const createClient = ({ baseURL, timeout = 15000, withCredentials = true } = {})
   return client;
 };
 
-export const apiClient = createClient({ baseURL: getBaseUrl() });
+// Create the client WITHOUT the baseURL
+export const apiClient = createClient();
+
+// Use an interceptor to set the baseURL dynamically before each request
+apiClient.interceptors.request.use((config) => {
+  // Get the URL from Vite's environment variables
+  config.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  return config;
+});
 
 /**
  * Upload a document with progress callback
@@ -140,7 +132,6 @@ export const getClausesForDocument = async ({ docId, timeout = 10000 }) => {
   return apiClient.get(`/api/documents/${docId}/clauses/`, { timeout });
 };
 
-// Optional: Named exports and default export
 export default {
   uploadDocument,
   fullAnalyze,
