@@ -1,10 +1,14 @@
 // apiEnhanced.js
-// Enhanced API client with the interceptor fix
+// Hardcoded API client for https://clauseiq-kgel.onrender.com
 
 import axios from 'axios';
 
+// HARDCODED BASE URL
+const HARDCODED_BASE_URL = 'https://clauseiq-kgel.onrender.com';
+
 const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
   const client = axios.create({
+    baseURL: HARDCODED_BASE_URL, // <-- Set directly here
     timeout,
     withCredentials,
     headers: {
@@ -12,7 +16,7 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
     },
   });
 
-  // Response interceptor to unwrap common API structure and add retry logic
+  // Response interceptor to unwrap API response and retry logic
   client.interceptors.response.use(
     (res) => res,
     async (error) => {
@@ -20,11 +24,11 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
 
       if (config._retryCount === undefined) {
         config._retryCount = 0;
-        config.retryDelay = 3000; // 3 seconds
+        config.retryDelay = 3000;
         config.maxRetries = 3;
       }
 
-      // Retry for network errors or 503s (e.g. cold starts)
+      // Retry for network errors or 503s
       if (
         (!error.response || error.response.status === 503) &&
         config._retryCount < config.maxRetries
@@ -57,15 +61,8 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
   return client;
 };
 
-// Create the client WITHOUT the baseURL
+// Create client with baseURL already set
 export const apiClient = createClient();
-
-// Use an interceptor to set the baseURL dynamically before each request
-apiClient.interceptors.request.use((config) => {
-  // Get the URL from Vite's environment variables
-  config.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-  return config;
-});
 
 /**
  * Upload a document with progress callback
@@ -132,6 +129,7 @@ export const getClausesForDocument = async ({ docId, timeout = 10000 }) => {
   return apiClient.get(`/api/documents/${docId}/clauses/`, { timeout });
 };
 
+// Export all functions
 export default {
   uploadDocument,
   fullAnalyze,
