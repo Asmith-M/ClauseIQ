@@ -1,14 +1,10 @@
-// apiEnhanced.js
-// Hardcoded API client for https://clauseiq-kgel.onrender.com
-
 import axios from 'axios';
 
-// HARDCODED BASE URL
 const HARDCODED_BASE_URL = 'https://clauseiq-kgel.onrender.com';
 
 const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
   const client = axios.create({
-    baseURL: HARDCODED_BASE_URL, // <-- Set directly here
+    baseURL: HARDCODED_BASE_URL,
     timeout,
     withCredentials,
     headers: {
@@ -16,7 +12,6 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
     },
   });
 
-  // Response interceptor to unwrap API response and retry logic
   client.interceptors.response.use(
     (res) => res,
     async (error) => {
@@ -28,7 +23,6 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
         config.maxRetries = 3;
       }
 
-      // Retry for network errors or 503s
       if (
         (!error.response || error.response.status === 503) &&
         config._retryCount < config.maxRetries
@@ -38,7 +32,6 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
         return client(config);
       }
 
-      // Normalize error
       if (error.response) {
         const { status, data } = error.response;
         return Promise.reject({
@@ -61,12 +54,8 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
   return client;
 };
 
-// Create client with baseURL already set
 export const apiClient = createClient();
 
-/**
- * Upload a document with progress callback
- */
 export const uploadDocument = async ({
   file,
   filename,
@@ -74,6 +63,8 @@ export const uploadDocument = async ({
   onProgress,
   timeout = 60000,
 }) => {
+  console.log('[uploadDocument] Sending file to API:', filename);
+
   const form = new FormData();
   form.append('filename', filename);
   form.append('file', file);
@@ -93,9 +84,6 @@ export const uploadDocument = async ({
   });
 };
 
-/**
- * Full analysis of uploaded document
- */
 export const fullAnalyze = async ({ file, timeout = 60000 }) => {
   const form = new FormData();
   form.append('file', file);
@@ -105,16 +93,10 @@ export const fullAnalyze = async ({ file, timeout = 60000 }) => {
   });
 };
 
-/**
- * Analyze a specific clause
- */
 export const analyzeClause = async ({ clause, timeout = 15000 }) => {
   return apiClient.post('/api/analyze-clause/', { clause }, { timeout });
 };
 
-/**
- * List uploaded documents with pagination
- */
 export const listDocuments = async ({ skip = 0, limit = 10, timeout = 10000 } = {}) => {
   return apiClient.get('/api/documents/', {
     params: { skip, limit },
@@ -122,14 +104,10 @@ export const listDocuments = async ({ skip = 0, limit = 10, timeout = 10000 } = 
   });
 };
 
-/**
- * Get clauses for a specific document
- */
 export const getClausesForDocument = async ({ docId, timeout = 10000 }) => {
   return apiClient.get(`/api/documents/${docId}/clauses/`, { timeout });
 };
 
-// Export all functions
 export default {
   uploadDocument,
   fullAnalyze,
