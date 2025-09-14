@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { uploadDocument } from '../lib/apiEnhanced';
+import { uploadDocument } from '../lib/api';
 
 export default function FileUpload({ onUploadSuccess, onUploadError }) {
   const [file, setFile] = useState(null);

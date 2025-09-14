@@ -1,7 +1,7 @@
 // ApiTest.jsx
 import React, { useState } from 'react';
 // Make sure this path is correct for your project structure
-import { apiClient } from '../lib/apiEnhanced';
+import { apiClient } from '../lib/api';
 
 export default function ApiTest() {
   const [status, setStatus] = useState('idle');
@@ -53,7 +53,7 @@ export default function ApiTest() {
 
     try {
       // Assuming your apiEnhanced.js file exports an uploadDocument function
-      const { uploadDocument } = await import('../lib/apiEnhanced');
+      const { uploadDocument } = await import('../lib/api');
       const res = await uploadDocument({
         file: dummyFile,
         filename: 'test.pdf',
