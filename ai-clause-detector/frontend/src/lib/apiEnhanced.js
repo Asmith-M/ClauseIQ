@@ -1,10 +1,8 @@
 import axios from 'axios';
 
-const HARDCODED_BASE_URL = 'https://clauseiq-kgel.onrender.com';
-
+// Create the client instance without a base URL.
 const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
   const client = axios.create({
-    baseURL: HARDCODED_BASE_URL,
     timeout,
     withCredentials,
     headers: {
@@ -12,6 +10,7 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
     },
   });
 
+  // Response interceptor for retries and error handling
   client.interceptors.response.use(
     (res) => res,
     async (error) => {
@@ -23,6 +22,7 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
         config.maxRetries = 3;
       }
 
+      // Retry for network errors or 503s (e.g., Render.com cold starts)
       if (
         (!error.response || error.response.status === 503) &&
         config._retryCount < config.maxRetries
@@ -32,6 +32,7 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
         return client(config);
       }
 
+      // Normalize the error format for consistent handling
       if (error.response) {
         const { status, data } = error.response;
         return Promise.reject({
@@ -54,8 +55,14 @@ const createClient = ({ timeout = 15000, withCredentials = true } = {}) => {
   return client;
 };
 
+// Export a single, configured client instance
 export const apiClient = createClient();
 
+// --- API Functions ---
+
+/**
+ * Uploads a document.
+ */
 export const uploadDocument = async ({
   file,
   filename,
@@ -63,14 +70,13 @@ export const uploadDocument = async ({
   onProgress,
   timeout = 60000,
 }) => {
-  console.log('[uploadDocument] Sending file to API:', filename);
-
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   const form = new FormData();
   form.append('filename', filename);
   form.append('file', file);
   if (clausesData) form.append('clauses_data', JSON.stringify(clausesData));
 
-  return apiClient.post('/api/documents/upload', form, {
+  return apiClient.post(`${API_URL}/api/documents/upload`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout,
     onUploadProgress: (progressEvent) => {
@@ -84,30 +90,47 @@ export const uploadDocument = async ({
   });
 };
 
+/**
+ * Performs a full analysis on a document.
+ */
 export const fullAnalyze = async ({ file, timeout = 60000 }) => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   const form = new FormData();
   form.append('file', file);
-  return apiClient.post('/api/full-analyze/', form, {
+  return apiClient.post(`${API_URL}/api/full-analyze/`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout,
   });
 };
 
+/**
+ * Analyzes a single clause.
+ */
 export const analyzeClause = async ({ clause, timeout = 15000 }) => {
-  return apiClient.post('/api/analyze-clause/', { clause }, { timeout });
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  return apiClient.post(`${API_URL}/api/analyze-clause/`, { clause }, { timeout });
 };
 
+/**
+ * Lists all documents.
+ */
 export const listDocuments = async ({ skip = 0, limit = 10, timeout = 10000 } = {}) => {
-  return apiClient.get('/api/documents/', {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  return apiClient.get(`${API_URL}/api/documents/`, {
     params: { skip, limit },
     timeout,
   });
 };
 
+/**
+ * Gets all clauses for a specific document.
+ */
 export const getClausesForDocument = async ({ docId, timeout = 10000 }) => {
-  return apiClient.get(`/api/documents/${docId}/clauses/`, { timeout });
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  return apiClient.get(`${API_URL}/api/documents/${docId}/clauses/`, { timeout });
 };
 
+// Default export for convenience
 export default {
   uploadDocument,
   fullAnalyze,
