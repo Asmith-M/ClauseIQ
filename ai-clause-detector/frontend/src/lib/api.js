@@ -62,6 +62,8 @@ export const uploadDocument = async ({
   const form = new FormData();
   form.append('filename', filename);
   form.append('file', file);
+  console.log('--- INSIDE THE CORRECT uploadDocument FUNCTION ---');
+  console.log('Requesting URL:', `${API_URL}/api/documents/upload`);
   if (clausesData) form.append('clauses_data', JSON.stringify(clausesData));
   return apiClient.post(`${API_URL}/api/documents/upload`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
