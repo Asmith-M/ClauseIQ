@@ -27,9 +27,24 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import {
+  uploadDocument,
+  listDocuments,
+  analyzeClause,
+  getClausesForDocument,
+} from "../lib/api" // IMPORTANT: IMPORT YOUR API CLIENT
 
 // Sidebar Component
-function Sidebar({ isOpen, onClose, darkMode, selectedDocument, onSelectDocument, onHome, onToggleDarkMode, onUploadNew }) {
+function Sidebar({
+  isOpen,
+  onClose,
+  darkMode,
+  selectedDocument,
+  onSelectDocument,
+  onHome,
+  onToggleDarkMode,
+  onUploadNew,
+}) {
   const getRiskBadgeColor = (riskLevel) => {
     switch (riskLevel) {
       case "low":
@@ -57,47 +72,41 @@ function Sidebar({ isOpen, onClose, darkMode, selectedDocument, onSelectDocument
   const [documentHistory, setDocumentHistory] = useState([])
   const [loading, setLoading] = useState(false)
 
-  // Fetch real document history from backend
   useEffect(() => {
     async function fetchDocuments() {
       if (!isOpen) return
-      
+
       setLoading(true)
       try {
-        const response = await fetch("/api/documents/", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        })
-        
-        if (!response.ok) throw new Error("Failed to fetch documents")
-        const data = await response.json()
-        
-        // Map documents to expected format for UI
-        const docs = data.documents?.map((doc) => {
-          // Calculate max risk level as a number first
-          const maxRiskNumeric = doc.clauses?.reduce((maxRisk, clause) => {
+        const response = await listDocuments() // USE API CLIENT
+        const data = response.data // Axios puts response in .data
+
+        const docs =
+          data.documents?.map((doc) => {
             const riskLevelsMap = { low: 1, medium: 2, high: 3 }
-            const clauseRisk = riskLevelsMap[clause.risk?.toLowerCase()] || 0
-            return clauseRisk > maxRisk ? clauseRisk : maxRisk
-          }, 0) || 0
+            const maxRiskNumeric =
+              doc.clauses?.reduce((maxRisk, clause) => {
+                const clauseRisk =
+                  riskLevelsMap[clause.risk?.toLowerCase()] || 0
+                return clauseRisk > maxRisk ? clauseRisk : maxRisk
+              }, 0) || 0
 
-          // Convert numeric riskLevel back to string
-          const riskLevelStr = ["none", "low", "medium", "high"]
-          const calculatedRiskLevel = riskLevelStr[maxRiskNumeric] || "none"
+            const riskLevelStr = ["none", "low", "medium", "high"]
+            const calculatedRiskLevel = riskLevelStr[maxRiskNumeric] || "none"
 
-          return {
-            id: doc.id,
-            name: doc.filename || doc.name,
-            uploadDate: new Date(doc.upload_time || doc.created_at).toLocaleDateString(),
-            status: "analyzed",
-            clauses: doc.clauses?.length || 0,
-            riskLevel: calculatedRiskLevel,
-            size: doc.size || "N/A",
-          }
-        }) || []
-        
+            return {
+              id: doc.id,
+              name: doc.filename || doc.name,
+              uploadDate: new Date(
+                doc.upload_time || doc.created_at
+              ).toLocaleDateString(),
+              status: "analyzed",
+              clauses: doc.clauses?.length || 0,
+              riskLevel: calculatedRiskLevel,
+              size: doc.size || "N/A",
+            }
+          }) || []
+
         setDocumentHistory(docs)
       } catch (err) {
         console.error("Error fetching documents:", err)
@@ -110,22 +119,29 @@ function Sidebar({ isOpen, onClose, darkMode, selectedDocument, onSelectDocument
     fetchDocuments()
   }, [isOpen])
 
+  // ... rest of the Sidebar component JSX remains the same ...
   return (
     <>
       {/* Mobile Overlay */}
-      {isOpen && <div className="fixed inset-0 bg-black/70 z-40 lg:hidden" onClick={onClose} aria-hidden="true" />}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 z-40 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Sidebar */}
       <aside
         className={`
-          fixed left-0 top-0 h-full
-          ${isOpen ? "w-80" : "w-16"}
-          bg-gradient-to-b from-blue-600 via-purple-600 to-indigo-700 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900
-          border-r border-blue-700 dark:border-gray-800
-          transition-all duration-300 ease-in-out z-50
-          shadow-2xl lg:shadow-none
-          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          lg:relative lg:z-auto
+         fixed left-0 top-0 h-full
+         ${isOpen ? "w-80" : "w-16"}
+         bg-gradient-to-b from-blue-600 via-purple-600 to-indigo-700 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900
+         border-r border-blue-700 dark:border-gray-800
+         transition-all duration-300 ease-in-out z-50
+         shadow-2xl lg:shadow-none
+         ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+         lg:relative lg:z-auto
         `}
       >
         <div className="flex flex-col h-full bg-transparent">
@@ -138,11 +154,21 @@ function Sidebar({ isOpen, onClose, darkMode, selectedDocument, onSelectDocument
                     <Shield className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-white tracking-wide text-lg">ClauseIQ</h2>
-                    <p className="text-xs text-blue-100/80">AI-Powered Legal Clause Analyzer</p>
+                    <h2 className="font-bold text-white tracking-wide text-lg">
+                      ClauseIQ
+                    </h2>
+                    <p className="text-xs text-blue-100/80">
+                      AI-Powered Legal Clause Analyzer
+                    </p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={onClose} className="lg:hidden" aria-label="Close sidebar">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="lg:hidden"
+                  aria-label="Close sidebar"
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </>
@@ -194,7 +220,11 @@ function Sidebar({ isOpen, onClose, darkMode, selectedDocument, onSelectDocument
               className="w-full justify-center hover:bg-blue-700/30 dark:hover:bg-gray-800 text-white"
               aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
-              {isOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              {isOpen ? (
+                <ChevronLeft className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
             </Button>
           </div>
 
@@ -204,17 +234,23 @@ function Sidebar({ isOpen, onClose, darkMode, selectedDocument, onSelectDocument
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Document History</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Document History
+                  </h3>
                 </div>
-                
+
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
                   </div>
                 ) : documentHistory.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-sm text-blue-100/80 mb-2">No documents yet</p>
-                    <p className="text-xs text-blue-100/60">Upload your first PDF to get started</p>
+                    <p className="text-sm text-blue-100/80 mb-2">
+                      No documents yet
+                    </p>
+                    <p className="text-xs text-blue-100/60">
+                      Upload your first PDF to get started
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -223,36 +259,74 @@ function Sidebar({ isOpen, onClose, darkMode, selectedDocument, onSelectDocument
                         key={doc.id}
                         onClick={() => onSelectDocument(doc)}
                         className={`p-4 rounded-2xl cursor-pointer transition-all duration-200 group
-                          ${selectedDocument?.id === doc.id
-                            ? "bg-gradient-to-r from-blue-400 to-indigo-500 text-white border-2 border-blue-300 shadow-lg"
-                            : "bg-white/80 dark:bg-gray-900/80 hover:bg-blue-100 dark:hover:bg-gray-800 border-2 border-transparent"}
-                        `}
-                        style={{ boxShadow: selectedDocument?.id === doc.id ? '0 4px 24px 0 rgba(59,130,246,0.15)' : undefined }}
+                          ${
+                            selectedDocument?.id === doc.id
+                              ? "bg-gradient-to-r from-blue-400 to-indigo-500 text-white border-2 border-blue-300 shadow-lg"
+                              : "bg-white/80 dark:bg-gray-900/80 hover:bg-blue-100 dark:hover:bg-gray-800 border-2 border-transparent"
+                          }
+                         `}
+                        style={{
+                          boxShadow:
+                            selectedDocument?.id === doc.id
+                              ? "0 4px 24px 0 rgba(59,130,246,0.15)"
+                              : undefined,
+                        }}
                       >
                         <div className="flex items-start gap-3">
                           <div className="p-2 bg-white dark:bg-gray-700 rounded-lg shadow-md group-hover:shadow-lg transition-shadow">
                             <FileText className="h-4 w-4 text-blue-600 dark:text-blue-300" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={doc.name}>
+                            <p
+                              className="text-sm font-semibold text-gray-900 dark:text-white truncate"
+                              title={doc.name}
+                            >
                               {doc.name}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{doc.uploadDate}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{doc.size}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {doc.uploadDate}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {doc.size}
+                            </p>
                             <div className="flex items-center gap-2 mt-2 flex-wrap">
-                              <Badge className={`text-xs px-2 py-1 ${getStatusBadgeColor(doc.status)}`}>{doc.status}</Badge>
-                              <Badge className={`text-xs px-2 py-1 ${getRiskBadgeColor(doc.riskLevel)}`}>{doc.riskLevel} risk</Badge>
+                              <Badge
+                                className={`text-xs px-2 py-1 ${getStatusBadgeColor(
+                                  doc.status
+                                )}`}
+                              >
+                                {doc.status}
+                              </Badge>
+                              <Badge
+                                className={`text-xs px-2 py-1 ${getRiskBadgeColor(
+                                  doc.riskLevel
+                                )}`}
+                              >
+                                {doc.riskLevel} risk
+                              </Badge>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{doc.clauses} clauses</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {doc.clauses} clauses
+                            </p>
                           </div>
                         </div>
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-1 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="sm" className="h-7 px-2 bg-blue-100 hover:bg-blue-200 dark:bg-gray-800 dark:hover:bg-gray-700" aria-label="Download document">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 bg-blue-100 hover:bg-blue-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+                            aria-label="Download document"
+                          >
                             <Download className="h-3 w-3" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 hover:text-red-600 bg-red-50 dark:bg-gray-800 dark:hover:bg-gray-700" aria-label="Delete document">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-red-500 hover:text-red-600 bg-red-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                            aria-label="Delete document"
+                          >
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
@@ -268,10 +342,12 @@ function Sidebar({ isOpen, onClose, darkMode, selectedDocument, onSelectDocument
                     key={doc.id}
                     onClick={() => onSelectDocument(doc)}
                     className={`p-2 rounded-lg cursor-pointer transition-all duration-200
-                      ${selectedDocument?.id === doc.id
-                        ? "bg-gradient-to-r from-blue-400 to-indigo-500 text-white"
-                        : "hover:bg-blue-100 dark:hover:bg-gray-800 bg-white/80 dark:bg-gray-900/80"}
-                    `}
+                      ${
+                        selectedDocument?.id === doc.id
+                          ? "bg-gradient-to-r from-blue-400 to-indigo-500 text-white"
+                          : "hover:bg-blue-100 dark:hover:bg-gray-800 bg-white/80 dark:bg-gray-900/80"
+                      }
+                     `}
                     title={doc.name}
                   >
                     <div className="flex justify-center">
@@ -303,9 +379,15 @@ function Sidebar({ isOpen, onClose, darkMode, selectedDocument, onSelectDocument
                 size="sm"
                 onClick={onToggleDarkMode}
                 className="w-full justify-start text-white hover:bg-blue-700/30 dark:hover:bg-gray-800 gap-2"
-                aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                aria-label={
+                  darkMode ? "Switch to light mode" : "Switch to dark mode"
+                }
               >
-                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {darkMode ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
                 {darkMode ? "Light Mode" : "Dark Mode"}
               </Button>
             </div>
@@ -347,24 +429,24 @@ export default function App() {
   }
 
   if (currentPage === "welcome") {
-    return <WelcomePage 
-      onGetStarted={handleGetStarted} 
-      darkMode={darkMode} 
-      toggleDarkMode={toggleDarkMode}
-    />
+    return (
+      <WelcomePage
+        onGetStarted={handleGetStarted}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+      />
+    )
   }
 
-  return <HomePage 
-    darkMode={darkMode} 
-    toggleDarkMode={toggleDarkMode}
-  />
+  return <HomePage darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
 }
 
 // Animation delay helpers for staggered effects
-const getDelay = (index, base = 0.2) => `${base + index * 0.2}s`;
+const getDelay = (index, base = 0.2) => `${base + index * 0.2}s`
 
 // Welcome Page Component
 function WelcomePage({ onGetStarted, darkMode, toggleDarkMode }) {
+  // ... JSX remains the same ...
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-950 dark:to-purple-900 relative overflow-hidden">
       {/* Grid Background */}
@@ -373,8 +455,8 @@ function WelcomePage({ onGetStarted, darkMode, toggleDarkMode }) {
           className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: `
-              linear-gradient(rgba(59,130,246,0.08) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(59,130,246,0.08) 1px, transparent 1px)
+             linear-gradient(rgba(59,130,246,0.08) 1px, transparent 1px),
+             linear-gradient(90deg, rgba(59,130,246,0.08) 1px, transparent 1px)
             `,
             backgroundSize: "50px 50px",
           }}
@@ -400,7 +482,11 @@ function WelcomePage({ onGetStarted, darkMode, toggleDarkMode }) {
           onClick={toggleDarkMode}
           className="hover:bg-blue-700/20 dark:hover:bg-gray-800 text-blue-700 dark:text-yellow-300"
         >
-          {darkMode ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+          {darkMode ? (
+            <Sun className="h-6 w-6" />
+          ) : (
+            <Moon className="h-6 w-6" />
+          )}
         </Button>
       </div>
 
@@ -426,68 +512,117 @@ function WelcomePage({ onGetStarted, darkMode, toggleDarkMode }) {
 
           {/* Welcome Text */}
           <div className="space-y-8 mb-20">
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent leading-tight animate-slide-up" style={{animationDelay: getDelay(0)}}>
+            <h1
+              className="text-6xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent leading-tight animate-slide-up"
+              style={{ animationDelay: getDelay(0) }}
+            >
               ClauseIQ
             </h1>
-            <p className="text-2xl md:text-3xl text-gray-600 dark:text-gray-300 font-light animate-slide-up" style={{animationDelay: getDelay(1)}}>
+            <p
+              className="text-2xl md:text-3xl text-gray-600 dark:text-gray-300 font-light animate-slide-up"
+              style={{ animationDelay: getDelay(1) }}
+            >
               AI-Powered Legal Clause Analyzer
             </p>
-            <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed animate-slide-up" style={{animationDelay: getDelay(2)}}>
-              Upload legal PDF documents and get instant AI-based clause analysis, risk detection, and plain-English explanations. Transform complex legal text into actionable intelligence.
+            <p
+              className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed animate-slide-up"
+              style={{ animationDelay: getDelay(2) }}
+            >
+              Upload legal PDF documents and get instant AI-based clause
+              analysis, risk detection, and plain-English explanations.
+              Transform complex legal text into actionable intelligence.
             </p>
           </div>
 
           {/* Feature Cards */}
           <div className="grid md:grid-cols-3 gap-8 mb-20">
             {/* Card 1 */}
-            <div className="p-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20 dark:border-gray-700/20 animate-slide-up" style={{animationDelay: getDelay(3)}}>
+            <div
+              className="p-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20 dark:border-gray-700/20 animate-slide-up"
+              style={{ animationDelay: getDelay(3) }}
+            >
               <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl w-fit mx-auto mb-6 animate-bounce-slow">
                 <Zap className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">AI-Powered Analysis</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                AI-Powered Analysis
+              </h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Advanced machine learning algorithms analyze your legal documents with precision and speed, identifying key clauses instantly.
+                Advanced machine learning algorithms analyze your legal
+                documents with precision and speed, identifying key clauses
+                instantly.
               </p>
             </div>
             {/* Card 2 */}
-            <div className="p-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20 dark:border-gray-700/20 animate-slide-up" style={{animationDelay: getDelay(4)}}>
+            <div
+              className="p-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20 dark:border-gray-700/20 animate-slide-up"
+              style={{ animationDelay: getDelay(4) }}
+            >
               <div className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl w-fit mx-auto mb-6 animate-bounce-slow">
                 <AlertCircle className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Risk Detection</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                Risk Detection
+              </h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Automatically identify potential risks and problematic clauses before they become costly legal issues.
+                Automatically identify potential risks and problematic clauses
+                before they become costly legal issues.
               </p>
             </div>
             {/* Card 3 */}
-            <div className="p-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20 dark:border-gray-700/20 animate-slide-up" style={{animationDelay: getDelay(5)}}>
+            <div
+              className="p-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20 dark:border-gray-700/20 animate-slide-up"
+              style={{ animationDelay: getDelay(5) }}
+            >
               <div className="p-4 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl w-fit mx-auto mb-6 animate-bounce-slow">
                 <Lightbulb className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Smart Explanations</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                Smart Explanations
+              </h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Get clear, understandable explanations for complex legal terms and clauses in plain English.
+                Get clear, understandable explanations for complex legal terms
+                and clauses in plain English.
               </p>
             </div>
           </div>
 
           {/* Stats Section */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 animate-slide-up" style={{animationDelay: getDelay(6)}}>
+          <div
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 animate-slide-up"
+            style={{ animationDelay: getDelay(6) }}
+          >
             <div className="text-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-gray-700/20">
-              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">10K+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Documents Analyzed</div>
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                10K+
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Documents Analyzed
+              </div>
             </div>
             <div className="text-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-gray-700/20">
-              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">99.9%</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Accuracy Rate</div>
+              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                99.9%
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Accuracy Rate
+              </div>
             </div>
             <div className="text-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-gray-700/20">
-              <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">5 Sec</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Average Analysis</div>
+              <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
+                5 Sec
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Average Analysis
+              </div>
             </div>
             <div className="text-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-gray-700/20">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">24/7</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">AI Availability</div>
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                24/7
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                AI Availability
+              </div>
             </div>
           </div>
 
@@ -505,7 +640,8 @@ function WelcomePage({ onGetStarted, darkMode, toggleDarkMode }) {
               Free to try • Secure & Private • Instant AI Analysis
             </p>
             <p className="text-gray-400 dark:text-gray-500 mt-2 text-sm">
-              Developed by <span className="font-semibold">Asmith Mahendrakar</span>
+              Developed by{" "}
+              <span className="font-semibold">Asmith Mahendrakar</span>
             </p>
           </div>
         </div>
@@ -513,9 +649,9 @@ function WelcomePage({ onGetStarted, darkMode, toggleDarkMode }) {
     </div>
   )
 }
-
 // Empty State Component
 function EmptyState({ darkMode }) {
+  // ... JSX remains the same ...
   return (
     <div className="flex items-center justify-center py-20">
       <div className="text-center max-w-md mx-auto">
@@ -524,12 +660,13 @@ function EmptyState({ darkMode }) {
             <Upload className="h-12 w-12 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
-        
+
         <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
           Ready to analyze your first document?
         </h3>
         <p className="text-gray-500 dark:text-gray-400 mb-6">
-          Upload a PDF document above to get started with AI-powered clause analysis.
+          Upload a PDF document above to get started with AI-powered clause
+          analysis.
         </p>
         <div className="flex items-center justify-center gap-2 text-sm text-gray-400 dark:text-gray-500">
           <Upload className="h-4 w-4" />
@@ -553,7 +690,7 @@ function HomePage({ darkMode, toggleDarkMode }) {
 
   // Scroll to top on entering HomePage
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }, [])
 
   const handleFileUpload = async (event) => {
@@ -565,41 +702,27 @@ function HomePage({ darkMode, toggleDarkMode }) {
       setClauses([])
       setAiResults({})
       setAiLoading({})
-      
+
       try {
-        const formData = new FormData()
-        formData.append("filename", file.name)
-        formData.append("file", file)
-        
-        const response = await fetch("/api/documents/upload", {
-          method: "POST",
-          body: formData,
-        })
-        
-        if (!response.ok) throw new Error("Failed to upload and analyze document")
-        
-        const data = await response.json()
+        const response = await uploadDocument({
+          file: file,
+          filename: file.name,
+        }) // USE API CLIENT
+        const data = response.data // Axios puts response in .data
+
         const extractedClauses = data.clauses || []
         setClauses(extractedClauses)
         setShowResults(true)
-        
-        // Auto-analyze all clauses with staggered async calls
+
+        // Auto-analyze all clauses
         const delay = (ms) => new Promise((res) => setTimeout(res, ms))
         extractedClauses.forEach(async (clause, idx) => {
           setAiLoading((prev) => ({ ...prev, [idx]: true }))
-          await delay(idx * 350) // stagger requests by 350ms each
-          
+          await delay(idx * 350)
+
           try {
-            const resp = await fetch("/api/analyze-clause/", {
-              method: "POST",
-              headers: { 
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ clause }),
-            })
-            
-            if (!resp.ok) throw new Error("AI analysis failed")
-            const result = await resp.json()
+            const resp = await analyzeClause({ clause }) // USE API CLIENT
+            const result = resp.data // Axios puts response in .data
             setAiResults((prev) => ({ ...prev, [idx]: result }))
           } catch (err) {
             setAiResults((prev) => ({ ...prev, [idx]: { error: err.message } }))
@@ -607,7 +730,6 @@ function HomePage({ darkMode, toggleDarkMode }) {
             setAiLoading((prev) => ({ ...prev, [idx]: false }))
           }
         })
-        
       } catch (err) {
         alert("Error uploading document: " + err.message)
       } finally {
@@ -619,16 +741,8 @@ function HomePage({ darkMode, toggleDarkMode }) {
   const handleSmartExplain = async (clause, index) => {
     setAiLoading((prev) => ({ ...prev, [index]: true }))
     try {
-      const response = await fetch("/api/analyze-clause/", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ clause }),
-      })
-      
-      if (!response.ok) throw new Error("AI analysis failed")
-      const data = await response.json()
+      const response = await analyzeClause({ clause }) // USE API CLIENT
+      const data = response.data // Axios puts response in .data
       setAiResults((prev) => ({ ...prev, [index]: data }))
     } catch (err) {
       setAiResults((prev) => ({ ...prev, [index]: { error: err.message } }))
@@ -645,13 +759,11 @@ function HomePage({ darkMode, toggleDarkMode }) {
     setClauses([])
     setAiResults({})
     setAiLoading({})
-    
+
     try {
-      const response = await fetch(`/api/documents/${doc.id}/clauses`)
-      
-      if (!response.ok) throw new Error("Failed to fetch clauses for document")
-      const data = await response.json()
-      const fetchedClauses = data.clauses?.map(c => c.text || c) || []
+      const response = await getClausesForDocument({ docId: doc.id }) // USE API CLIENT
+      const data = response.data // Axios puts response in .data
+      const fetchedClauses = data.clauses?.map((c) => c.text || c) || []
       setClauses(fetchedClauses)
       setShowResults(true)
     } catch (err) {
@@ -669,8 +781,7 @@ function HomePage({ darkMode, toggleDarkMode }) {
     setClauses([])
     setAiResults({})
     setAiLoading({})
-    
-    // Trigger file input click
+
     const fileInput = document.querySelector('input[type="file"]')
     if (fileInput) {
       fileInput.click()
@@ -703,6 +814,7 @@ function HomePage({ darkMode, toggleDarkMode }) {
     }
   }
 
+  // ... rest of the HomePage component JSX remains the same ...
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 transition-colors flex">
       {/* Sidebar */}
@@ -740,7 +852,9 @@ function HomePage({ darkMode, toggleDarkMode }) {
               </Button>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent leading-tight">
-                  {selectedDocument ? selectedDocument.name : "ClauseIQ - Legal Clause Analyzer"}
+                  {selectedDocument
+                    ? selectedDocument.name
+                    : "ClauseIQ - Legal Clause Analyzer"}
                 </h1>
                 <p className="text-sm text-blue-100/80 dark:text-blue-200/80">
                   {selectedDocument
@@ -757,7 +871,11 @@ function HomePage({ darkMode, toggleDarkMode }) {
                 onClick={toggleDarkMode}
                 className="hover:bg-blue-700/20 dark:hover:bg-gray-800 text-white"
               >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {darkMode ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
               </Button>
             </div>
           </div>
@@ -774,7 +892,9 @@ function HomePage({ darkMode, toggleDarkMode }) {
                     <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
                       <Upload className="h-5 w-5 text-white" />
                     </div>
-                    <span className="font-semibold text-lg md:text-xl">Upload PDF Document</span>
+                    <span className="font-semibold text-lg md:text-xl">
+                      Upload PDF Document
+                    </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -785,16 +905,17 @@ function HomePage({ darkMode, toggleDarkMode }) {
                           <Upload className="w-10 h-10 text-blue-500 dark:text-blue-400 group-hover:text-purple-500 transition-colors" />
                         </div>
                         <p className="mb-2 text-lg font-medium text-gray-600 dark:text-gray-300">
-                          <span className="font-semibold">Click to upload</span> or drag and drop
+                          <span className="font-semibold">Click to upload</span>{" "}
+                          or drag and drop
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           PDF files only (Max 10MB)
                         </p>
                       </div>
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        accept=".pdf" 
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".pdf"
                         onChange={handleFileUpload}
                       />
                     </label>
@@ -807,7 +928,9 @@ function HomePage({ darkMode, toggleDarkMode }) {
                           <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">{uploadedFile.name}</p>
+                          <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                            {uploadedFile.name}
+                          </p>
                           <p className="text-sm text-blue-600 dark:text-blue-400">
                             {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
                           </p>
@@ -815,7 +938,10 @@ function HomePage({ darkMode, toggleDarkMode }) {
                         {isAnalyzing && (
                           <div className="flex items-center gap-3">
                             <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
-                            <Badge variant="secondary" className="animate-pulse px-3 py-1">
+                            <Badge
+                              variant="secondary"
+                              className="animate-pulse px-3 py-1"
+                            >
                               Analyzing...
                             </Badge>
                           </div>
@@ -836,7 +962,9 @@ function HomePage({ darkMode, toggleDarkMode }) {
                       <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
                         <FileText className="h-5 w-5 text-white" />
                       </div>
-                      <span className="font-semibold text-lg md:text-xl">Clause Analysis Results</span>
+                      <span className="font-semibold text-lg md:text-xl">
+                        Clause Analysis Results
+                      </span>
                     </CardTitle>
                     <Badge variant="outline" className="px-3 py-1">
                       {clauses.length} clauses found
@@ -859,12 +987,51 @@ function HomePage({ darkMode, toggleDarkMode }) {
                                 <FileText className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                               </div>
                               <div>
-                                <h4 className="font-semibold text-lg text-gray-900 dark:text-white">Clause {index + 1}</h4>
-                                <p className="text-sm mt-1 text-gray-500 dark:text-gray-400">Category: <span className="font-semibold">{ai?.category || <span className="italic">(Analyzing...)</span>}</span></p>
-                                <p className="text-sm mt-1 text-gray-500 dark:text-gray-400">Risk: {ai?.risk ? (
-                                  <Badge variant={ai.risk.toLowerCase() === 'high' ? 'outline' : ai.risk.toLowerCase() === 'medium' ? 'secondary' : 'default'} className={`capitalize ${ai.risk.toLowerCase() === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : ai.risk.toLowerCase() === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'}`}>{ai.risk}</Badge>
-                                ) : <span className="italic">(Analyzing...)</span>}</p>
-                                {ai?.reason && <p className="text-xs mt-1 text-gray-400 dark:text-gray-500">Reason: {ai.reason}</p>}
+                                <h4 className="font-semibold text-lg text-gray-900 dark:text-white">
+                                  Clause {index + 1}
+                                </h4>
+                                <p className="text-sm mt-1 text-gray-500 dark:text-gray-400">
+                                  Category:{" "}
+                                  <span className="font-semibold">
+                                    {ai?.category || (
+                                      <span className="italic">
+                                        (Analyzing...)
+                                      </span>
+                                    )}
+                                  </span>
+                                </p>
+                                <p className="text-sm mt-1 text-gray-500 dark:text-gray-400">
+                                  Risk:{" "}
+                                  {ai?.risk ? (
+                                    <Badge
+                                      variant={
+                                        ai.risk.toLowerCase() === "high"
+                                          ? "outline"
+                                          : ai.risk.toLowerCase() === "medium"
+                                          ? "secondary"
+                                          : "default"
+                                      }
+                                      className={`capitalize ${
+                                        ai.risk.toLowerCase() === "high"
+                                          ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                                          : ai.risk.toLowerCase() === "medium"
+                                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                          : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                      }`}
+                                    >
+                                      {ai.risk}
+                                    </Badge>
+                                  ) : (
+                                    <span className="italic">
+                                      (Analyzing...)
+                                    </span>
+                                  )}
+                                </p>
+                                {ai?.reason && (
+                                  <p className="text-xs mt-1 text-gray-400 dark:text-gray-500">
+                                    Reason: {ai.reason}
+                                  </p>
+                                )}
                               </div>
                             </div>
                             <Button
@@ -884,14 +1051,18 @@ function HomePage({ darkMode, toggleDarkMode }) {
                           </div>
 
                           <div className="mb-6 p-5 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-xl border border-gray-200/50 dark:border-gray-600/50">
-                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{clause}</p>
+                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                              {clause}
+                            </p>
                           </div>
 
                           <div className="mt-4">
                             <div className="rounded-xl bg-gradient-to-br from-blue-50 to-green-50 dark:from-blue-900/30 dark:to-green-900/30 border border-blue-200/40 dark:border-blue-700/40 p-4 shadow-inner">
                               <div className="flex items-center gap-2 mb-2">
                                 <Sparkles className="h-4 w-4 text-blue-400 dark:text-blue-300" />
-                                <span className="font-semibold text-blue-700 dark:text-blue-200 text-sm">AI Explanation</span>
+                                <span className="font-semibold text-blue-700 dark:text-blue-200 text-sm">
+                                  AI Explanation
+                                </span>
                               </div>
                               <p className="text-gray-800 dark:text-gray-100 text-base leading-relaxed">
                                 {aiLoading[index] ? (
@@ -902,10 +1073,16 @@ function HomePage({ darkMode, toggleDarkMode }) {
                                 ) : ai?.explanation ? (
                                   <span>{ai.explanation}</span>
                                 ) : (
-                                  <span className="italic">Click "Smart Explain" for AI analysis</span>
+                                  <span className="italic">
+                                    Click "Smart Explain" for AI analysis
+                                  </span>
                                 )}
                               </p>
-                              {ai?.error && <div className="text-xs text-red-500 mt-2">Error: {ai.error}</div>}
+                              {ai?.error && (
+                                <div className="text-xs text-red-500 mt-2">
+                                  Error: {ai.error}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -917,9 +1094,10 @@ function HomePage({ darkMode, toggleDarkMode }) {
             )}
 
             {/* Empty State */}
-            {!showResults && !isAnalyzing && !uploadedFile && !selectedDocument && (
-              <EmptyState darkMode={darkMode} />
-            )}
+            {!showResults &&
+              !isAnalyzing &&
+              !uploadedFile &&
+              !selectedDocument && <EmptyState darkMode={darkMode} />}
           </div>
         </main>
       </div>
