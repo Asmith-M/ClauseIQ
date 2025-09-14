@@ -20,11 +20,11 @@ ClauseIQ transforms the intimidating world of legal documents into something any
 ## 📸 Screenshots
 
 ### Dashboard Overview
-![ClauseIQ Dashboard](screenshots/dashboard.png)
+![ClauseIQ Dashboard](/dashboard.png)
 *Clean, intuitive interface showing document analysis results*
 
 ### AI-Powered Analysis
-![Clause Analysis](screenshots/analysis.png)
+![Clause Analysis](/analysis.png)
 *Real-time clause detection with risk assessment and plain-English explanations*
 
 ## 🎯 Why ClauseIQ?
