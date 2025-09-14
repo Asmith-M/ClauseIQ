@@ -253,5 +253,3 @@ MIT License - Use it, modify it, share it. See the [LICENSE](LICENSE) file for d
 ---
 
 **Ready to decode your next legal document?** [**Try ClauseIQ now**](https://clause-iq.vercel.app/)
-
-*Questions? Issues? Ideas? [Open an issue](link-to-issues) or reach out directly.*
