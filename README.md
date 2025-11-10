@@ -1,4 +1,4 @@
-# ClauseIQ 🛡️
+# ClauseIQ
 
 **AI-Powered Legal Clause Detection & Analysis Platform**
 
@@ -11,13 +11,13 @@
 
 ClauseIQ transforms the intimidating world of legal documents into something anyone can understand. Whether you're a small business owner reviewing a contract, a student studying legal texts, or just someone who wants to know what they're actually signing, ClauseIQ has your back.
 
-## 🚀 Live Demo
+## Live Demo
 
 **[Try ClauseIQ Now →](https://clause-iq.vercel.app/)**
 
 *No registration required - just upload a PDF and see the magic happen!*
 
-## 📸 Screenshots
+## Screenshots
 
 ### Dashboard Overview
 ![ClauseIQ Dashboard](/dashboard.png)
@@ -27,32 +27,32 @@ ClauseIQ transforms the intimidating world of legal documents into something any
 ![Clause Analysis](/analysis.png)
 *Real-time clause detection with risk assessment and plain-English explanations*
 
-## 🎯 Why ClauseIQ?
+## Why ClauseIQ?
 
 Ever found yourself staring at a legal document, wondering what all those complicated terms actually mean? You're not alone. Legal jargon can be overwhelming, and missing important clauses can be costly. That's exactly why I built ClauseIQ.
 
 After spending countless hours helping friends and family decode contracts, NDAs, and legal agreements, I realized there had to be a better way. ClauseIQ was born from the simple idea that everyone deserves to understand what they're agreeing to, without needing a law degree.
 
-## ✨ What Makes ClauseIQ Special
+## What Makes ClauseIQ Special
 
-### 🔍 Smart Document Processing
+### Smart Document Processing
 - **Drag & Drop Simplicity**: Just drop your PDF and watch ClauseIQ work its magic
 - **Lightning Fast**: Get results in seconds, not hours
 - **Advanced Extraction**: Powered by PyMuPDF for accurate text extraction
 
-### 🤖 AI That Actually Helps
+### AI That Actually Helps
 - **Risk Assessment**: Automatically identifies potential red flags (Low/Medium/High risk)
 - **Smart Categorization**: Organizes clauses by type (NDA, Liability, Payment, etc.)
 - **Plain English**: Translates legal speak into language humans actually understand
 - **Double-Checked Accuracy**: Multi-agent AI verification ensures reliable results
 
-### 📊 Beautiful & Intuitive Interface
+### Beautiful & Intuitive Interface
 - **Color-Coded Risk Levels**: Spot concerning clauses at a glance
 - **Document History**: Never lose track of your analyses
 - **Dark Mode**: Easy on the eyes during late-night contract reviews
 - **Mobile Friendly**: Works perfectly on your phone or tablet
 
-## 🛠️ Built With Love Using
+## Built With Love Using
 
 ### Frontend Magic
 - **React 19.1.0** - Because modern web apps deserve modern tools
@@ -65,7 +65,7 @@ After spending countless hours helping friends and family decode contracts, NDAs
 - **PyMuPDF 1.23.8** - The PDF processing workhorse
 - **OpenRouter API** - Connecting to Mistral 3.2-24B for world-class AI analysis
 
-## 🏗️ How It All Works
+## How It All Works
 
 Think of ClauseIQ as having three main superpowers:
 
@@ -75,14 +75,14 @@ Think of ClauseIQ as having three main superpowers:
 
 ```mermaid
 graph TD
-    A[📄 Upload PDF] -->|Magic Happens| B[🔍 Extract Clauses]
-    B --> C[🤖 AI Analysis]
-    C --> D[📊 Risk Assessment]
-    D --> E[💾 Save Results]
-    E --> F[🎯 Beautiful Dashboard]
+    A[ Upload PDF] -->|Magic Happens| B[ Extract Clauses]
+    B --> C[ AI Analysis]
+    C --> D[ Risk Assessment]
+    D --> E[ Save Results]
+    E --> F[ Beautiful Dashboard]
 ```
 
-## 🚀 Get Started in 5 Minutes
+## Get Started in 5 Minutes
 
 ### What You'll Need
 - Node.js 18+ (the JavaScript runtime)
@@ -130,11 +130,11 @@ npm install
 npm run dev
 ```
 
-**Boom! 🎉** You're ready to go:
+**Boom! ** You're ready to go:
 - **Main App**: http://localhost:5173
 - **API Playground**: http://localhost:8000/docs
 
-## 📖 How to Use ClauseIQ
+## How to Use ClauseIQ
 
 ### Step 1: Upload Your Document
 Click that big friendly "Upload New PDF" button or just drag your file right onto the page. ClauseIQ accepts PDFs up to 10MB (that's most contracts and agreements).
@@ -155,7 +155,7 @@ Sit back and watch as ClauseIQ:
 ### Step 4: Keep Everything Organized
 Your document history lives in the sidebar. Click on any previous analysis to revisit it instantly.
 
-## 🌐 Deployment
+## Deployment
 
 ### Live on the Web
 ClaudeIQ is deployed and ready to use at: **[https://clause-iq.vercel.app/]**
@@ -184,7 +184,7 @@ Popular deployment options:
 - **Frontend**: Vercel, Netlify, GitHub Pages
 - **Backend**: Railway, Render, Heroku, DigitalOcean
 
-## 🎯 What's Coming Next
+## What's Coming Next
 
 I'm constantly working to make ClauseIQ even better. Here's what's on the roadmap:
 
@@ -200,7 +200,7 @@ I'm constantly working to make ClauseIQ even better. Here's what's on the roadma
 - **Mobile App**: Native iOS and Android apps
 - **Enterprise Features**: Advanced security and compliance tools
 
-## 🤝 Want to Contribute?
+## Want to Contribute?
 
 ClauseIQ is better because of community contributions! Whether you're fixing bugs, adding features, or just improving documentation, your help is welcome.
 
@@ -212,14 +212,14 @@ ClauseIQ is better because of community contributions! Whether you're fixing bug
 
 Even small improvements make a big difference!
 
-## 📊 By the Numbers
+## By the Numbers
 
-- ⚡ **~5 seconds** average analysis time
-- 🎯 **99.9%** clause detection accuracy
-- 🌍 **24/7** AI availability
-- 📈 **10,000+** documents analyzed and counting
+-  **~5 seconds** average analysis time
+-  **99.9%** clause detection accuracy
+-  **24/7** AI availability
+-  **10,000+** documents analyzed and counting
 
-## 🏆 About the Creator
+## About the Creator
 
 **Hi, I'm Asmith Mahendrakar!** 👋
 
